@@ -10,6 +10,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.set('trust proxy', 1);
 app.use(passport.initialize());
 
 // ─── Database ──────────────────────────────────────────────────────
