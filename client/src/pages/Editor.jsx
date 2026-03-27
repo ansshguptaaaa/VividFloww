@@ -9,6 +9,7 @@ import {
   Type, Image as ImageIcon, Box, LayoutTemplate,
   ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Eye, Save, FileText, Trash2, CheckCircle2, Loader2, MousePointer2, Download, Share, Undo2, Redo2, Sparkles
 } from 'lucide-react';
+import { API_BASE_URL } from '../utils/api';
 
 // Predefined component types
 const COMPONENT_TYPES = [
@@ -374,7 +375,7 @@ export default function Editor() {
       try {
         const token = localStorage.getItem('vividflow_token');
         if (!token) return navigate('/');
-        const res = await axios.get(`http://localhost:5000/api/projects/${projectId}`, {
+        const res = await axios.get(`${API_BASE_URL}/api/projects/${projectId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProject(res.data);
@@ -441,7 +442,7 @@ export default function Editor() {
     setSaveStatus('syncing');
     try {
       const token = localStorage.getItem('vividflow_token');
-      await axios.put(`http://localhost:5000/api/projects/${projectId}`,
+      await axios.put(`${API_BASE_URL}/api/projects/${projectId}`,
         { canvasData: { elements: elements, theme: currentTheme, backgroundColor: canvasBg } },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -722,7 +723,7 @@ export default function Editor() {
                               setElements(prev => prev.map(el => el.id === uploadingId ? { ...el, isUploading: true } : el));
 
                               try {
-                                const res = await axios.post('http://localhost:5000/api/upload', formData, {
+                                const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                                   headers: { 'Content-Type': 'multipart/form-data' }
                                 });
 

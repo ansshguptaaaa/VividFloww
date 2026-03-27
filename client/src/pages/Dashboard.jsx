@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, LayoutTemplate, MoreVertical, Search, LogOut, Loader2, Pencil, Trash } from 'lucide-react';
+import { API_BASE_URL } from '../utils/api';
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -45,7 +46,7 @@ export default function Dashboard() {
         return;
       }
       
-      const res = await axios.get('http://localhost:5000/api/projects', {
+      const res = await axios.get(`${API_BASE_URL}/api/projects`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProjects(res.data);
@@ -67,7 +68,7 @@ export default function Dashboard() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('vividflow_token');
-      const res = await axios.post('http://localhost:5000/api/projects', 
+      const res = await axios.post(`${API_BASE_URL}/api/projects`, 
         { name: projectName, description: projectDesc },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -88,7 +89,7 @@ export default function Dashboard() {
     if (window.confirm("Are you sure you want to delete this project?")) {
       try {
         const token = localStorage.getItem('vividflow_token');
-        await axios.delete(`http://localhost:5000/api/projects/${id}`, {
+        await axios.delete(`${API_BASE_URL}/api/projects/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProjects(projects.filter(p => p._id !== id));
@@ -112,7 +113,7 @@ export default function Dashboard() {
     try {
       setIsSubmitting(true);
       const token = localStorage.getItem('vividflow_token');
-      const res = await axios.patch(`http://localhost:5000/api/projects/${editingProject._id}`, 
+      const res = await axios.patch(`${API_BASE_URL}/api/projects/${editingProject._id}`, 
         { name: editProjectName, thumbnailUrl: editThumbnailUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Loader2, Image as ImageIcon } from 'lucide-react';
 
+import { API_BASE_URL } from '../utils/api';
+
 const ImageWithFallback = ({ src, style, alt }) => {
   const [error, setError] = useState(false);
 
@@ -28,7 +30,7 @@ export default function SitePreview() {
   useEffect(() => {
     const fetchSite = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/projects/public/${projectId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/projects/public/${projectId}`);
         setProject(res.data);
         if (res.data.canvasData && Array.isArray(res.data.canvasData.elements)) {
           setElements(res.data.canvasData.elements);

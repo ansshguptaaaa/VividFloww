@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Star, Send, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '../utils/api';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ export default function Contact() {
     setIsSubmitting(true);
     console.log('Sending data to backend...');
     try {
-      const response = await axios.post('http://localhost:5000/api/feedback/submit', formData);
+      const response = await axios.post(`${API_BASE_URL}/api/feedback/submit`, formData);
       console.log('Feedback submitted:', response.data);
       setIsSuccess(true);
     } catch (error) {

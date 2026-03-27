@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/api';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -42,7 +43,7 @@ export default function Auth() {
     if (!email) return;
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/send-otp', { email });
+      const response = await axios.post(`${API_BASE_URL}/api/auth/send-otp`, { email });
       console.log('OTP Send Response:', response.data);
       setIsOtpSent(true);
       setTimer(30);
@@ -60,7 +61,7 @@ export default function Auth() {
     if (otp.length !== 6) return;
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/verify-otp', { email, otp });
+      const response = await axios.post(`${API_BASE_URL}/api/auth/verify-otp`, { email, otp });
       localStorage.setItem('vividflow_token', response.data.token);
       navigate('/dashboard');
     } catch (error) {
@@ -71,7 +72,7 @@ export default function Auth() {
   };
 
   const handleGoogleAuth = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${API_BASE_URL}/api/auth/google`;
   };
 
   return (
