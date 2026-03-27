@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'mock_client_id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'mock_client_secret',
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback"
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -50,7 +50,7 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }),
   (req, res) => {
     const token = jwt.sign({ id: req.user._id, name: req.user.name }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    res.redirect(`http://localhost:5173/dashboard?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${token}`);
   }
 );
 
