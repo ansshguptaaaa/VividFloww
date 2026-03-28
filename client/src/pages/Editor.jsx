@@ -489,7 +489,7 @@ export default function Editor() {
 
 
   const handleCopyLink = () => {
-    const url = `http://localhost:5173/site/${projectId}`;
+    const url = `${window.location.origin}/site/${projectId}`;
     navigator.clipboard.writeText(url)
       .then(() => {
         setCopySuccess('Copied!');
@@ -900,7 +900,7 @@ export default function Editor() {
             <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
               <input
                 readOnly
-                value={`http://localhost:5173/site/${projectId}`}
+                value={`${window.location.origin}/site/${projectId}`}
                 className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700"
               />
               <button
