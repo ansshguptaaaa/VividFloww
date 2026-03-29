@@ -28,6 +28,7 @@ app.use('/api/feedback', feedbackRoutes);
 
 // ─── Health check ──────────────────────────────────────────────────
 app.get('/', (req, res) => res.send('VividFloww API is running...'));
+app.get('/api/ping', (req, res) => res.json({ message: 'pong' }));
 
 // ─── Global error handler ──────────────────────────────────────────
 app.use((err, req, res, next) => {
