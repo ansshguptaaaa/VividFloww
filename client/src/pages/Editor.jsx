@@ -67,6 +67,38 @@ function DraggableItem({ item }) {
 function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSize, onDragStart }) {
   const isSelected = selectedId === el.id;
   const [isDragging, setIsDragging] = React.useState(false);
+  const [isMobileResizeMode, setIsMobileResizeMode] = React.useState(false);
+  const touchStartTimer = React.useRef(null);
+  const lastTouchTime = React.useRef(0);
+
+  React.useEffect(() => {
+    if (!isSelected) {
+      setIsMobileResizeMode(false);
+    }
+  }, [isSelected]);
+
+  const handleTouchStart = (e) => {
+    onSelect(el.id);
+
+    const now = Date.now();
+    if (now - lastTouchTime.current < 300) {
+      setIsMobileResizeMode(true);
+      clearTimeout(touchStartTimer.current);
+    } else {
+      lastTouchTime.current = now;
+      touchStartTimer.current = setTimeout(() => {
+        setIsMobileResizeMode(true);
+      }, 500);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    clearTimeout(touchStartTimer.current);
+  };
+
+  const handleTouchMove = () => {
+    clearTimeout(touchStartTimer.current);
+  };
 
   const innerStyles = { ...el.styles };
   delete innerStyles.position;
@@ -126,16 +158,18 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
     zIndex: 10
   };
 
+  const showHandles = isSelected && (window.innerWidth >= 768 || isMobileResizeMode);
+
   return (
     <Rnd
       position={{ x: parseInt(el.styles?.left) || 0, y: parseInt(el.styles?.top) || 0 }}
       size={{ width: getWidth(), height: isAutoHeight ? undefined : heightVal }}
       disableDragging={false}
-      enableResizing={isSelected ? {
+      enableResizing={showHandles ? {
         top: false, right: false, bottom: false, left: false,
         topRight: true, bottomRight: true, bottomLeft: true, topLeft: true,
       } : false}
-      resizeHandleStyles={isSelected ? {
+      resizeHandleStyles={showHandles ? {
         topLeft: { ...cornerHandleStyle, top: '-6px', left: '-6px' },
         topRight: { ...cornerHandleStyle, top: '-6px', right: '-6px' },
         bottomLeft: { ...cornerHandleStyle, bottom: '-6px', left: '-6px' },
@@ -144,6 +178,10 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
       lockAspectRatio={el.type === 'image'}
       style={rndStyle}
       onMouseDown={(e) => {
+        e.stopPropagation();
+        onSelect(el.id);
+      }}
+      onClick={(e) => {
         e.stopPropagation();
         onSelect(el.id);
       }}
@@ -166,7 +204,16 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
         );
       }}
     >
-      <div style={{ width: '100%', height: '100%', cursor: 'move' }}>
+      <div 
+        style={{ width: '100%', height: '100%', cursor: 'move' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(el.id);
+        }}
+      >
         {el.type === 'heading' && <h2 style={{ ...innerStyles, width: '100%' }}>{el.content}</h2>}
         {el.type === 'text' && <p style={{ ...innerStyles, width: '100%' }}>{el.content}</p>}
         {el.type === 'button' && <button style={{ ...innerStyles, width: '100%' }}>{el.content}</button>}

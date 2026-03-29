@@ -95,6 +95,10 @@
     transform: scale(1) !important; /* Normal Zoom */
     touch-action: none !important; /* Prevent browser scrolling so we can handle pinch zoom */
   }
+  
+  #droppable-canvas * {
+    touch-action: none !important;
+  }
 
   /* 3. Bottom 'Add' Bar (Heading, Text, Image etc.) */
   .mobile-tools {
@@ -129,7 +133,9 @@
     height: auto;
     max-height: 50vh;
     background: white;
-    z-index: 110;
+    z-index: 1000 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
     transition: bottom 0.3s ease;
