@@ -76,11 +76,19 @@
   .mobile-canvas-full, main, div.flex.flex-1.overflow-hidden {
     display: block !important;
     width: 100vw !important;
-    height: calc(100vh - 120px) !important; /* Header aur Bottom bar space chhodd kar */
     margin: 0 !important;
     position: relative !important;
     overflow-x: hidden !important;
     background: #f3f4f6 !important; /* Thoda grey bg, taki canvas white dikhe */
+    transition: height 0.3s ease !important;
+  }
+  
+  .mobile-canvas-full.panel-open {
+    height: calc(100vh - 380px) !important;
+  }
+  
+  .mobile-canvas-full:not(.panel-open) {
+    height: calc(100vh - 80px) !important;
   }
 
   /* Asli Burger Canvas (The Star) */
@@ -100,29 +108,24 @@
     touch-action: none !important;
   }
 
-  /* 3. Bottom 'Add' Bar (Heading, Text, Image etc.) */
+  /* 3. Bottom 'Add' Bar (Heading, Text, Image etc.) aur Themes */
   .mobile-tools {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 80px;
-    background: white;
     display: flex !important;
-    justify-content: center;
     align-items: center;
-    gap: 20px;
-    border-top: 1px solid #ddd;
-    z-index: 100;
-    overflow-x: auto;
+    justify-content: space-around;
     padding: 10px;
+    background: white;
+    border-top: 2px solid #eee;
+    gap: 15px;
   }
-
-  /* Icons for Heading, Text, Image etc. */
-  .mobile-tool-icon {
-    font-size: 24px;
-    color: #333;
+  .theme-circle {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
   }
+  .theme-circle:active { transform: scale(0.9); }
 
   /* 4. Edit properties panel को bottom-sheet बनाओ (React logic change needed to show) */
   .mobile-drawer, [class*="PropertiesPanel"] {
@@ -130,8 +133,8 @@
     bottom: -100%; /* Shuru mein hidden rahega */
     left: 0;
     width: 100%;
-    height: auto;
-    max-height: 50vh;
+    height: auto !important;
+    max-height: 300px !important;
     background: white;
     z-index: 1000 !important;
     overflow-y: auto !important;
@@ -153,11 +156,23 @@
     height: auto !important;
     padding: 10px !important;
     flex-wrap: nowrap !important;
-    justify-content: space-around !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    z-index: 1001 !important;
+    gap: 10px !important;
+  }
+  header::-webkit-scrollbar, [class*="Header"]::-webkit-scrollbar {
+    display: none !important;
+  }
+  header > div {
+    flex-shrink: 0 !important;
   }
   header button, [class*="Header"] button {
     font-size: 11px !important;
     padding: 6px 10px !important;
     white-space: nowrap !important;
+    flex-shrink: 0 !important;
   }
 }

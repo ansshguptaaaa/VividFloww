@@ -205,6 +205,7 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
       }}
     >
       <div 
+        id={`canvas-element-${el.id}`}
         style={{ width: '100%', height: '100%', cursor: 'move' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -336,6 +337,18 @@ export default function Editor() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('Professional Blue');
   const [canvasBg, setCanvasBg] = useState('#f8fafc');
+
+  // Auto-Center Element on select for mobile
+  useEffect(() => {
+    if (isMobileWindow && selectedElementId) {
+      setTimeout(() => {
+        const elNode = document.getElementById(`canvas-element-${selectedElementId}`);
+        if (elNode) {
+          elNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300); // Wait for canvas height transition
+    }
+  }, [selectedElementId, isMobileWindow]);
 
   // Handle element changes
   const updateElements = (newElements, recordHistory = true) => {
@@ -750,7 +763,7 @@ export default function Editor() {
           )}
 
           {/* Center - Canvas + AI Bar */}
-          <div className="mobile-canvas-full flex flex-col overflow-hidden" style={{ width: isMobileWindow ? '100vw' : 'auto', flex: 1 }}>
+          <div className={`mobile-canvas-full flex flex-col overflow-hidden ${selectedElement ? 'panel-open' : ''}`} style={{ width: isMobileWindow ? '100vw' : 'auto', flex: 1 }}>
 
             {/* Droppable Canvas */}
             <DroppableCanvas elements={elements} selectedId={selectedElementId} onSelect={setSelectedElementId} onUpdatePosition={handleUpdatePosition} onUpdateSize={handleUpdateSize} onDragStart={handleCanvasElementDragStart} backgroundColor={canvasBg} />
@@ -1009,46 +1022,68 @@ export default function Editor() {
         </div>
       )}
 
-      {/* 3. Bottom Click-To-Add Bar Component */}
-      <div className="fixed bottom-0 left-0 w-full h-[80px] bg-white border-t border-slate-200 flex justify-center items-center gap-4 z-[100] md:hidden px-4 overflow-x-auto shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        <button
-          onClick={() => {
-            const newElement = {
-              id: `el_${Date.now()}_h`, type: 'heading', content: 'New Heading', styles: { fontSize: '32px', color: '#000000', fontWeight: 'bold', padding: '10px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
-            };
-            updateElements([...elements, newElement]);
-            setSelectedElementId(newElement.id);
-          }}
-          className="flex flex-col items-center justify-center p-2 text-slate-700 bg-slate-50 border border-slate-200 rounded-xl min-w-[100px] flex-shrink-0 hover:bg-slate-100 transition-colors"
-        >
-          <span className="text-xs font-semibold">Add Heading</span>
-        </button>
+      {/* 3. Bottom Click-To-Add Bar + Themes Component */}
+      <div className="fixed bottom-0 left-0 w-full z-[100] md:hidden mobile-tools">
+        {/* Left Side: Adding Components */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              const newElement = {
+                id: `el_${Date.now()}_h`, type: 'heading', content: 'New Heading', styles: { fontSize: '32px', color: '#000000', fontWeight: 'bold', padding: '10px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
+              };
+              updateElements([...elements, newElement]);
+              setSelectedElementId(newElement.id);
+            }}
+            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors"
+          >
+            <Type className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-semibold">Heading</span>
+          </button>
 
-        <button
-          onClick={() => {
-            const newElement = {
-              id: `el_${Date.now()}_t`, type: 'text', content: 'Write some text here...', styles: { fontSize: '16px', color: '#4a5568', padding: '10px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
-            };
-            updateElements([...elements, newElement]);
-            setSelectedElementId(newElement.id);
-          }}
-          className="flex flex-col items-center justify-center p-2 text-slate-700 bg-slate-50 border border-slate-200 rounded-xl min-w-[100px] flex-shrink-0 hover:bg-slate-100 transition-colors"
-        >
-          <span className="text-xs font-semibold">Add Text</span>
-        </button>
+          <button
+            onClick={() => {
+              const newElement = {
+                id: `el_${Date.now()}_t`, type: 'text', content: 'Write some text here...', styles: { fontSize: '16px', color: '#4a5568', padding: '10px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
+              };
+              updateElements([...elements, newElement]);
+              setSelectedElementId(newElement.id);
+            }}
+            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors"
+          >
+            <FileText className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-semibold">Text</span>
+          </button>
 
-        <button
-          onClick={() => {
-            const newElement = {
-              id: `el_${Date.now()}_i`, type: 'image', content: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300', styles: { width: '300px', height: 'auto', objectFit: 'cover', borderRadius: '4px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
-            };
-            updateElements([...elements, newElement]);
-            setSelectedElementId(newElement.id);
-          }}
-          className="flex flex-col items-center justify-center p-2 text-slate-700 bg-slate-50 border border-slate-200 rounded-xl min-w-[100px] flex-shrink-0 hover:bg-slate-100 transition-colors"
-        >
-          <span className="text-xs font-semibold">Add Image</span>
-        </button>
+          <button
+            onClick={() => {
+              const newElement = {
+                id: `el_${Date.now()}_i`, type: 'image', content: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300', styles: { width: '300px', height: 'auto', objectFit: 'cover', borderRadius: '4px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
+              };
+              updateElements([...elements, newElement]);
+              setSelectedElementId(newElement.id);
+            }}
+            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors"
+          >
+            <ImageIcon className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-semibold">Image</span>
+          </button>
+        </div>
+
+        {/* Vertical Divider */}
+        <div className="w-[2px] h-8 bg-slate-200 shrink-0 rounded-full"></div>
+
+        {/* Right Side: Themes */}
+        <div className="flex items-center gap-3">
+          {Object.keys(THEMES).map(themeName => (
+            <button
+              key={themeName}
+              onClick={() => applyTheme(themeName)}
+              className={`theme-circle ${currentTheme === themeName ? 'border-purple-500 scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
+              style={{ backgroundColor: THEMES[themeName].primary }}
+              title={themeName}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
