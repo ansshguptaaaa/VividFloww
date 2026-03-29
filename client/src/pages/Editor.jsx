@@ -116,19 +116,30 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
     return `https://source.unsplash.com/800x600/?${keyword}`;
   };
 
+  const cornerHandleStyle = {
+    width: '12px',
+    height: '12px',
+    background: '#3b82f6', // Bright Blue
+    border: '2px solid white',
+    borderRadius: '50%',
+    position: 'absolute',
+    zIndex: 10
+  };
+
   return (
     <Rnd
       position={{ x: parseInt(el.styles?.left) || 0, y: parseInt(el.styles?.top) || 0 }}
       size={{ width: getWidth(), height: isAutoHeight ? undefined : heightVal }}
       disableDragging={false}
       enableResizing={isSelected ? {
-        top: false, right: true, bottom: true, left: false,
-        topRight: false, bottomRight: true, bottomLeft: false, topLeft: false,
+        top: false, right: false, bottom: false, left: false,
+        topRight: true, bottomRight: true, bottomLeft: true, topLeft: true,
       } : false}
       resizeHandleStyles={isSelected ? {
-        right: { ...handleStyle, right: '-5px', top: '50%', transform: 'translateY(-50%)' },
-        bottom: { ...handleStyle, bottom: '-5px', left: '50%', transform: 'translateX(-50%)' },
-        bottomRight: { ...handleStyle, right: '-5px', bottom: '-5px' },
+        topLeft: { ...cornerHandleStyle, top: '-6px', left: '-6px' },
+        topRight: { ...cornerHandleStyle, top: '-6px', right: '-6px' },
+        bottomLeft: { ...cornerHandleStyle, bottom: '-6px', left: '-6px' },
+        bottomRight: { ...cornerHandleStyle, bottom: '-6px', right: '-6px' },
       } : {}}
       lockAspectRatio={el.type === 'image'}
       style={rndStyle}
@@ -175,6 +186,27 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
 // Center Droppable Canvas Component
 function DroppableCanvas({ elements, selectedId, onSelect, onUpdatePosition, onUpdateSize, onDragStart, backgroundColor }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'canvas' });
+  const [canvasScale, setCanvasScale] = useState(1);
+  const [pinchState, setPinchState] = useState({ initialDist: 0, initialScale: 1 });
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      setPinchState({ initialDist: dist, initialScale: canvasScale });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && pinchState.initialDist > 0) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      const scale = pinchState.initialScale * (dist / pinchState.initialDist);
+      setCanvasScale(Math.min(Math.max(0.4, scale), 3)); // Restrict zoom level
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setPinchState({ initialDist: 0, initialScale: canvasScale });
+  };
 
   // Compute minimum canvas height so all elements are visible
   const minCanvasHeight = React.useMemo(() => {
@@ -195,10 +227,13 @@ function DroppableCanvas({ elements, selectedId, onSelect, onUpdatePosition, onU
         className={`relative border-2 transition-colors duration-200 ${
           isOver ? 'border-purple-400 bg-purple-50/50' : 'border-dashed border-slate-300'
         } m-4 rounded-2xl`}
-        style={{ minHeight: `${minCanvasHeight}px`, width: 'calc(100% - 32px)', backgroundColor: backgroundColor || '#f8fafc' }}
+        style={{ minHeight: `${minCanvasHeight}px`, width: 'calc(100% - 32px)', backgroundColor: backgroundColor || '#f8fafc', transform: `scale(${canvasScale})`, transformOrigin: 'top center' }}
         onClick={(e) => {
           if (e.target === e.currentTarget) onSelect(null);
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {elements.length === 0 && !isOver && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 pointer-events-none">
@@ -239,6 +274,13 @@ export default function Editor() {
   const [futureElements, setFutureElements] = useState([]);
   const [selectedElementId, setSelectedElementId] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'syncing', 'error'
+  const [isMobileWindow, setIsMobileWindow] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileWindow(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
@@ -633,7 +675,7 @@ export default function Editor() {
 
           {/* Left Sidebar - Components (hidden in full-screen) */}
           {!isFullscreen && (
-          <aside className="w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)]">
+          <aside className="w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.05)]" style={{ display: isMobileWindow ? 'none' : 'flex' }}>
             <div className="p-4 border-b border-slate-100">
               <h3 className="font-semibold text-slate-800 text-sm tracking-wide uppercase">Draggable Components</h3>
             </div>
@@ -661,7 +703,7 @@ export default function Editor() {
           )}
 
           {/* Center - Canvas + AI Bar */}
-          <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="mobile-canvas-full flex flex-col overflow-hidden" style={{ width: isMobileWindow ? '100vw' : 'auto', flex: 1 }}>
 
             {/* Droppable Canvas */}
             <DroppableCanvas elements={elements} selectedId={selectedElementId} onSelect={setSelectedElementId} onUpdatePosition={handleUpdatePosition} onUpdateSize={handleUpdateSize} onDragStart={handleCanvasElementDragStart} backgroundColor={canvasBg} />
@@ -669,7 +711,7 @@ export default function Editor() {
 
           {/* Right Sidebar - Properties Panel (hidden in full-screen) */}
           {!isFullscreen && (
-          <aside className="w-72 bg-white border-l border-slate-200 shrink-0 flex flex-col z-10 shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.05)]">
+          <aside className={`w-72 bg-white border-l border-slate-200 shrink-0 flex flex-col z-10 shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.05)] mobile-drawer ${selectedElement ? 'active' : ''}`} style={{ display: isMobileWindow ? 'none' : 'flex' }}>
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-800 text-sm tracking-wide uppercase">Properties</h3>
               {selectedElement && (
@@ -919,6 +961,48 @@ export default function Editor() {
           </div>
         </div>
       )}
+
+      {/* 3. Bottom Click-To-Add Bar Component */}
+      <div className="fixed bottom-0 left-0 w-full h-[80px] bg-white border-t border-slate-200 flex justify-center items-center gap-4 z-[100] md:hidden px-4 overflow-x-auto shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <button
+          onClick={() => {
+            const newElement = {
+              id: `el_${Date.now()}_h`, type: 'heading', content: 'New Heading', styles: { fontSize: '32px', color: '#000000', fontWeight: 'bold', padding: '10px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
+            };
+            updateElements([...elements, newElement]);
+            setSelectedElementId(newElement.id);
+          }}
+          className="flex flex-col items-center justify-center p-2 text-slate-700 bg-slate-50 border border-slate-200 rounded-xl min-w-[100px] flex-shrink-0 hover:bg-slate-100 transition-colors"
+        >
+          <span className="text-xs font-semibold">Add Heading</span>
+        </button>
+
+        <button
+          onClick={() => {
+            const newElement = {
+              id: `el_${Date.now()}_t`, type: 'text', content: 'Write some text here...', styles: { fontSize: '16px', color: '#4a5568', padding: '10px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
+            };
+            updateElements([...elements, newElement]);
+            setSelectedElementId(newElement.id);
+          }}
+          className="flex flex-col items-center justify-center p-2 text-slate-700 bg-slate-50 border border-slate-200 rounded-xl min-w-[100px] flex-shrink-0 hover:bg-slate-100 transition-colors"
+        >
+          <span className="text-xs font-semibold">Add Text</span>
+        </button>
+
+        <button
+          onClick={() => {
+            const newElement = {
+              id: `el_${Date.now()}_i`, type: 'image', content: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300', styles: { width: '300px', height: 'auto', objectFit: 'cover', borderRadius: '4px', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
+            };
+            updateElements([...elements, newElement]);
+            setSelectedElementId(newElement.id);
+          }}
+          className="flex flex-col items-center justify-center p-2 text-slate-700 bg-slate-50 border border-slate-200 rounded-xl min-w-[100px] flex-shrink-0 hover:bg-slate-100 transition-colors"
+        >
+          <span className="text-xs font-semibold">Add Image</span>
+        </button>
+      </div>
     </div>
   );
 }

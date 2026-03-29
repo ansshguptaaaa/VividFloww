@@ -226,9 +226,6 @@ export default function Auth() {
 
         </div>
         
-        <p className="absolute bottom-8 text-center text-xs text-slate-400 max-w-xs">
-          By continuing, you agree to VividFlow's <a href="#" className="underline hover:text-slate-600">Terms of Service</a> and <a href="#" className="underline hover:text-slate-600">Privacy Policy</a>.
-        </p>
       </div>
 
     </div>

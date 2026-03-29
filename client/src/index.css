@@ -7,3 +7,151 @@
     @apply antialiased text-slate-800 bg-slate-50;
   }
 }
+
+/* ============================================================
+   VIVIDFLOW CANVA-APP MOBILE RESPONSIVE (768px and below)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* --- 1. AUTH / LOGIN PAGE FIX (STACK LAYOUT) --- */
+  
+  /* Main wrapper to column */
+  div.min-h-screen.w-full.flex.bg-\[\#0a0a0a\] {
+    flex-direction: column !important;
+  }
+
+  /* Left visual (Hero Panel) to order 1 */
+  div.hidden.lg\:flex.flex-1 {
+    display: flex !important;
+    order: 1 !important;
+    width: 100vw !important;
+    height: 35vh !important;
+    min-height: 250px !important;
+    position: relative !important;
+    padding: 30px 20px !important;
+  }
+
+  /* Fix blue glowing orbs absolute scaling on mobile */
+  div.hidden.lg\:flex.flex-1 > div.absolute {
+    transform: scale(0.6) !important;
+  }
+
+  /* Right Form to order 2 */
+  div.flex-1.flex.flex-col.bg-white.text-slate-900 {
+    order: 2 !important;
+    width: 100vw !important;
+    min-height: 65vh !important;
+    height: auto !important;
+    flex: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    border-radius: 30px 30px 0 0 !important;
+    transform: translateY(-20px) !important;
+    z-index: 20 !important;
+  }
+
+  /* Login Card Width */
+  div.w-full.max-w-\[420px\],
+  .auth-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 24px !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* =========================================
+     2. EDITOR PAGE FIX (Strict Rule)
+     ========================================= */
+
+  /* 1. Sidebars (Left/Right) ko hide karo (w-64, w-72 classes target) */
+  aside, .w-64, .w-72, [class*="w-64"], [class*="w-72"] {
+    display: none !important;
+  }
+
+  /* 2. Main Canvas area poori screen gherega */
+  .mobile-canvas-full, main, div.flex.flex-1.overflow-hidden {
+    display: block !important;
+    width: 100vw !important;
+    height: calc(100vh - 120px) !important; /* Header aur Bottom bar space chhodd kar */
+    margin: 0 !important;
+    position: relative !important;
+    overflow-x: hidden !important;
+    background: #f3f4f6 !important; /* Thoda grey bg, taki canvas white dikhe */
+  }
+
+  /* Asli Burger Canvas (The Star) */
+  #droppable-canvas {
+    width: 90% !important;
+    margin: 10px auto !important;
+    min-height: 400px !important;
+    background: white !important;
+    z-index: 10 !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+    border-radius: 8px !important;
+    transform: scale(1) !important; /* Normal Zoom */
+    touch-action: none !important; /* Prevent browser scrolling so we can handle pinch zoom */
+  }
+
+  /* 3. Bottom 'Add' Bar (Heading, Text, Image etc.) */
+  .mobile-tools {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: white;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    border-top: 1px solid #ddd;
+    z-index: 100;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  /* Icons for Heading, Text, Image etc. */
+  .mobile-tool-icon {
+    font-size: 24px;
+    color: #333;
+  }
+
+  /* 4. Edit properties panel को bottom-sheet बनाओ (React logic change needed to show) */
+  .mobile-drawer, [class*="PropertiesPanel"] {
+    position: fixed;
+    bottom: -100%; /* Shuru mein hidden rahega */
+    left: 0;
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+    background: white;
+    z-index: 110;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
+    transition: bottom 0.3s ease;
+    display: none !important; /* Shuru mein gayab */
+  }
+  
+  /* Elements select hone par Properties Panel show karo (React logic change needed) */
+  .mobile-drawer.active, [class*="PropertiesPanel"].active {
+    bottom: 0 !important;
+    display: block !important;
+  }
+
+  /* 5. Header adjustments (Buttons wrap na hon, white space nowrap dalo) */
+  header, [class*="Header"] {
+    height: auto !important;
+    padding: 10px !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-around !important;
+  }
+  header button, [class*="Header"] button {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+    white-space: nowrap !important;
+  }
+}
