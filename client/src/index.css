@@ -88,35 +88,60 @@
   }
   
   .mobile-canvas-full:not(.panel-open) {
-    height: calc(100vh - 80px) !important;
+    height: calc(100vh - 150px) !important;
   }
 
   /* Asli Burger Canvas (The Star) */
   #droppable-canvas {
-    width: 90% !important;
-    margin: 10px auto !important;
-    min-height: 400px !important;
+    width: 95% !important;
+    margin: 20px auto !important;
+    min-height: 1500px !important; /* Isse canvas lamba ho jayega */
+    height: auto !important; /* Taaki content ke saath aur lamba ho sake */
     background: white !important;
+    position: relative !important;
     z-index: 10 !important;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
     border-radius: 8px !important;
+    padding-bottom: 100px !important; /* Niche thodi jagah chhodne ke liye */
     transform: scale(1) !important; /* Normal Zoom */
-    touch-action: none !important; /* Prevent browser scrolling so we can handle pinch zoom */
+    touch-action: pan-y pinch-zoom !important; /* Allow single finger vertical scroll and pinch */
   }
   
+  /* Remove touch-action inside to allow element dragging without blocking canvas scroll */
   #droppable-canvas * {
-    touch-action: none !important;
+    /* React-Rnd will handle touch on elements */
   }
+
+  /* Image Resize Custom Handles */
+  .resize-handle {
+    width: 15px;
+    height: 15px;
+    background: #3b82f6;
+    border: 2px solid white;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 100;
+  }
+  .handle-top-left { top: -7px; left: -7px; cursor: nw-resize; }
+  .handle-top-right { top: -7px; right: -7px; cursor: ne-resize; }
+  .handle-bottom-left { bottom: -7px; left: -7px; cursor: sw-resize; }
+  .handle-bottom-right { bottom: -7px; right: -7px; cursor: se-resize; }
 
   /* 3. Bottom 'Add' Bar (Heading, Text, Image etc.) aur Themes */
   .mobile-tools {
     display: flex !important;
     align-items: center;
-    justify-content: space-around;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 10px;
     background: white;
     border-top: 2px solid #eee;
     gap: 15px;
+  }
+  .mobile-tools::-webkit-scrollbar {
+    display: none;
   }
   .theme-circle {
     width: 25px;

@@ -159,17 +159,72 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
   };
 
   const showHandles = isSelected && (window.innerWidth >= 768 || isMobileResizeMode);
+  const isMobileWindow = window.innerWidth < 768;
+  const isMobileImage = isMobileWindow && el.type === 'image';
+  const showRndHandles = showHandles && !isMobileImage;
+
+  // Manual Touch Resize State for Mobile Images
+  const [touchResizeData, setTouchResizeData] = React.useState(null);
+
+  const handleTouchResizeStart = (e, corner) => {
+    e.stopPropagation();
+    setTouchResizeData({
+      corner,
+      startX: e.touches[0].clientX,
+      startY: e.touches[0].clientY,
+      startW: getWidth(),
+      startH: getHeight() === 'auto' ? getWidth() * 0.75 : getHeight(),
+      startLeft: parseInt(el.styles?.left) || 0,
+      startTop: parseInt(el.styles?.top) || 0
+    });
+  };
+
+  const handleTouchResizeMove = (e) => {
+    if (!touchResizeData) return;
+    e.stopPropagation();
+    
+    const deltaX = e.touches[0].clientX - touchResizeData.startX;
+    
+    let w = touchResizeData.startW;
+    let h = touchResizeData.startH;
+    let l = touchResizeData.startLeft;
+    let t = touchResizeData.startTop;
+
+    const corner = touchResizeData.corner;
+
+    if (corner.includes('right')) w = touchResizeData.startW + deltaX;
+    if (corner.includes('left')) { w = touchResizeData.startW - deltaX; l = touchResizeData.startLeft + deltaX; }
+
+    // Maintain aspect ratio
+    const ratio = touchResizeData.startW / touchResizeData.startH;
+    h = w / ratio;
+    
+    if (corner.includes('top')) {
+       t = touchResizeData.startTop + (touchResizeData.startH - h);
+    }
+
+    if (w < 20) return;
+    
+    onUpdateSize(el.id, w, h, l, t);
+  };
+
+  const handleTouchResizeEnd = (e) => {
+    if (touchResizeData) {
+      e.stopPropagation();
+      setTouchResizeData(null);
+    }
+  };
 
   return (
     <Rnd
       position={{ x: parseInt(el.styles?.left) || 0, y: parseInt(el.styles?.top) || 0 }}
       size={{ width: getWidth(), height: isAutoHeight ? undefined : heightVal }}
       disableDragging={false}
-      enableResizing={showHandles ? {
+      enableResizing={showRndHandles ? {
         top: false, right: false, bottom: false, left: false,
         topRight: true, bottomRight: true, bottomLeft: true, topLeft: true,
       } : false}
-      resizeHandleStyles={showHandles ? {
+      resizeHandleStyles={showRndHandles ? {
         topLeft: { ...cornerHandleStyle, top: '-6px', left: '-6px' },
         topRight: { ...cornerHandleStyle, top: '-6px', right: '-6px' },
         bottomLeft: { ...cornerHandleStyle, bottom: '-6px', left: '-6px' },
@@ -206,7 +261,7 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
     >
       <div 
         id={`canvas-element-${el.id}`}
-        style={{ width: '100%', height: '100%', cursor: 'move' }}
+        style={{ width: '100%', height: '100%', cursor: 'move', position: 'relative' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -215,6 +270,14 @@ function CanvasElement({ el, selectedId, onSelect, onUpdatePosition, onUpdateSiz
           onSelect(el.id);
         }}
       >
+        {isSelected && isMobileImage && (
+          <>
+            <div className="resize-handle handle-top-left" onTouchStart={(e) => handleTouchResizeStart(e, 'top-left')} onTouchMove={handleTouchResizeMove} onTouchEnd={handleTouchResizeEnd} onClick={e => e.stopPropagation()} />
+            <div className="resize-handle handle-top-right" onTouchStart={(e) => handleTouchResizeStart(e, 'top-right')} onTouchMove={handleTouchResizeMove} onTouchEnd={handleTouchResizeEnd} onClick={e => e.stopPropagation()} />
+            <div className="resize-handle handle-bottom-left" onTouchStart={(e) => handleTouchResizeStart(e, 'bottom-left')} onTouchMove={handleTouchResizeMove} onTouchEnd={handleTouchResizeEnd} onClick={e => e.stopPropagation()} />
+            <div className="resize-handle handle-bottom-right" onTouchStart={(e) => handleTouchResizeStart(e, 'bottom-right')} onTouchMove={handleTouchResizeMove} onTouchEnd={handleTouchResizeEnd} onClick={e => e.stopPropagation()} />
+          </>
+        )}
         {el.type === 'heading' && <h2 style={{ ...innerStyles, width: '100%' }}>{el.content}</h2>}
         {el.type === 'text' && <p style={{ ...innerStyles, width: '100%' }}>{el.content}</p>}
         {el.type === 'button' && <button style={{ ...innerStyles, width: '100%' }}>{el.content}</button>}
@@ -763,7 +826,7 @@ export default function Editor() {
           )}
 
           {/* Center - Canvas + AI Bar */}
-          <div className={`mobile-canvas-full flex flex-col overflow-hidden ${selectedElement ? 'panel-open' : ''}`} style={{ width: isMobileWindow ? '100vw' : 'auto', flex: 1 }}>
+          <div className={`mobile-canvas-full flex flex-col overflow-x-hidden ${selectedElement ? 'panel-open' : ''}`} style={{ width: isMobileWindow ? '100vw' : 'auto', flex: 1, overflowY: isMobileWindow ? 'auto' : 'hidden', WebkitOverflowScrolling: 'touch' }}>
 
             {/* Droppable Canvas */}
             <DroppableCanvas elements={elements} selectedId={selectedElementId} onSelect={setSelectedElementId} onUpdatePosition={handleUpdatePosition} onUpdateSize={handleUpdateSize} onDragStart={handleCanvasElementDragStart} backgroundColor={canvasBg} />
@@ -1025,7 +1088,7 @@ export default function Editor() {
       {/* 3. Bottom Click-To-Add Bar + Themes Component */}
       <div className="fixed bottom-0 left-0 w-full z-[100] md:hidden mobile-tools">
         {/* Left Side: Adding Components */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 shrink-0">
           <button
             onClick={() => {
               const newElement = {
@@ -1034,10 +1097,10 @@ export default function Editor() {
               updateElements([...elements, newElement]);
               setSelectedElementId(newElement.id);
             }}
-            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors"
+            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors shrink-0"
           >
             <Type className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-semibold">Heading</span>
+            <span className="text-[10px] font-semibold w-[40px] text-center">Heading</span>
           </button>
 
           <button
@@ -1048,10 +1111,10 @@ export default function Editor() {
               updateElements([...elements, newElement]);
               setSelectedElementId(newElement.id);
             }}
-            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors"
+            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors shrink-0"
           >
             <FileText className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-semibold">Text</span>
+            <span className="text-[10px] font-semibold w-[40px] text-center">Text</span>
           </button>
 
           <button
@@ -1062,15 +1125,29 @@ export default function Editor() {
               updateElements([...elements, newElement]);
               setSelectedElementId(newElement.id);
             }}
-            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors"
+            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors shrink-0"
           >
             <ImageIcon className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-semibold">Image</span>
+            <span className="text-[10px] font-semibold w-[40px] text-center">Image</span>
+          </button>
+
+          <button
+            onClick={() => {
+              const newElement = {
+                id: `el_${Date.now()}_b`, type: 'button', content: 'Click Me', styles: { fontSize: '14px', color: '#ffffff', backgroundColor: '#8b5cf6', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', border: 'none', position: 'absolute', left: '20px', top: '20px', zIndex: elements.length + 1 }
+              };
+              updateElements([...elements, newElement]);
+              setSelectedElementId(newElement.id);
+            }}
+            className="flex flex-col items-center justify-center p-1 text-slate-700 hover:text-purple-600 transition-colors shrink-0"
+          >
+            <MousePointer2 className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-semibold w-[40px] text-center">Button</span>
           </button>
         </div>
 
         {/* Vertical Divider */}
-        <div className="w-[2px] h-8 bg-slate-200 shrink-0 rounded-full"></div>
+        <div className="w-[2px] h-8 bg-slate-200 shrink-0 mx-2 rounded-full"></div>
 
         {/* Right Side: Themes */}
         <div className="flex items-center gap-3">
