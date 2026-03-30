@@ -1,6 +1,7 @@
 const express = require('express');
 const Project = require('../models/Project');
 const { protect } = require('../middleware/authMiddleware');
+const redis = require('../src/config/redis');
 const router = express.Router();
 
 const sanitizeCanvasData = (canvasData) => {
@@ -42,11 +43,23 @@ router.route('/')
 
 router.get('/public/:id', async (req, res) => {
   try {
+    const cacheKey = `project:${req.params.id}`;
+    const cachedProject = await redis.get(cacheKey);
+    
+    if (cachedProject) {
+      const parsedProject = typeof cachedProject === 'string' ? JSON.parse(cachedProject) : cachedProject;
+      return res.json(parsedProject);
+    }
+
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Project not found' });
     if (project.canvasData) {
       project.canvasData = sanitizeCanvasData(project.canvasData);
     }
+
+    // Save fetched data to Redis with a 1 hour TTL
+    await redis.setex(cacheKey, 3600, JSON.stringify(project));
+
     res.json(project);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -56,6 +69,17 @@ router.get('/public/:id', async (req, res) => {
 router.route('/:id')
   .get(protect, async (req, res) => {
     try {
+      const cacheKey = `project:${req.params.id}`;
+      const cachedProject = await redis.get(cacheKey);
+
+      if (cachedProject) {
+        const parsedProject = typeof cachedProject === 'string' ? JSON.parse(cachedProject) : cachedProject;
+        if (parsedProject.userId.toString() !== req.user.id) {
+           return res.status(401).json({ message: 'Not authorized to access this project' });
+        }
+        return res.json(parsedProject);
+      }
+
       const project = await Project.findById(req.params.id);
       if (!project) return res.status(404).json({ message: 'Project not found' });
       // Ensure the project belongs to the requesting user
@@ -65,6 +89,10 @@ router.route('/:id')
       if (project.canvasData) {
         project.canvasData = sanitizeCanvasData(project.canvasData);
       }
+
+      // Save fetched data to Redis with a 1 hour TTL
+      await redis.setex(cacheKey, 3600, JSON.stringify(project));
+
       res.json(project);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -86,6 +114,10 @@ router.route('/:id')
       if (canvasData) project.canvasData = canvasData;
 
       const updatedProject = await project.save();
+      
+      // Invalidate the cache since the project was updated
+      await redis.del(`project:${req.params.id}`);
+
       res.json(updatedProject);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -106,6 +138,10 @@ router.route('/:id')
       if (thumbnailUrl) project.thumbnailUrl = thumbnailUrl;
 
       const updatedProject = await project.save();
+      
+      // Invalidate the cache since the project was patched
+      await redis.del(`project:${req.params.id}`);
+
       res.json(updatedProject);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -121,6 +157,10 @@ router.route('/:id')
       }
 
       await project.deleteOne();
+      
+      // Invalidate the cache since the project was deleted
+      await redis.del(`project:${req.params.id}`);
+
       res.json({ message: 'Project removed' });
     } catch (error) {
       res.status(400).json({ message: error.message });

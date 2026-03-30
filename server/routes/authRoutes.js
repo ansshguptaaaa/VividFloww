@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Otp = require('../models/Otp');
 const nodemailer = require('nodemailer');
 const router = express.Router();
+const { otpRateLimiter } = require('../src/middleware/rateLimiter');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Standard integration for a @gmail.com address
@@ -57,7 +58,7 @@ router.get('/google/callback', passport.authenticate('google', { failureRedirect
 
 // --- OTP Routes ---
 
-router.post('/send-otp', async (req, res) => {
+router.post('/send-otp', otpRateLimiter, async (req, res) => {
   const { email } = req.body;
   console.log('Attempting to send email to:', email);
   console.log('Nodemailer User:', process.env.EMAIL_USER);
